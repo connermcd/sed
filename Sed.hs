@@ -3,13 +3,14 @@ module Sed where
 import Control.Monad.State
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+import qualified Data.List.Zipper as Z
 
 data SedState = SedState {
                   line         :: Int
-                , input        :: T.Text
+                , input        :: Z.Zipper T.Text
                 , patternSpace :: T.Text
                 , holdSpace    :: T.Text
-                , output       :: T.Text
+                -- , output       :: T.Text
                 }
 
 data Command = Print
@@ -19,22 +20,26 @@ data Command = Print
 
 sed :: [Command] -> T.Text -> T.Text
 sed cs t = evalState (runCommands cs) defaultState
-    where defaultState = SedState 1 t (head $ T.lines t) T.empty T.empty
+    where defaultState = SedState 1 (Z.delete z) (Z.cursor z) (T.singleton '\n')
+          z = Z.fromList $ T.lines t
 
 runCommands :: [Command] -> State SedState T.Text
 runCommands cs = do
     mapM_ runCommand cs
     ss <- get
-    if line ss == length (T.lines $ input ss)
-    then return $ output ss
+    if Z.endp $ input ss
+    then return . T.unlines . Z.toList $ input ss
     else runCommand Next >> runCommands cs
 
 runCommand :: Command -> State SedState ()
-runCommand Print = modify $ \ss ->
-    let newOutput = (T.lines $ output ss) ++ (T.lines $ patternSpace ss)
-    in ss { output = T.unlines newOutput }
+runCommand Print = modify $ \ss -> ss { input = Z.push (patternSpace ss) (input ss) }
 runCommand Delete = modify $ \ss -> ss { patternSpace = T.empty }
-runCommand Next = modify $ \ss -> ss { line = line ss + 1, patternSpace = (T.lines $ input ss) !! line ss }
+runCommand Next = modify $ \ss -> ss { line = line ss + 1,
+                                       input = Z.delete $ input ss,
+                                       patternSpace = Z.cursor $ input ss }
+
+-- (<+>) :: T.Text -> T.Text -> T.Text
+-- a <+> b = a `T.append` T.cons '\n' b
 
 main :: IO ()
 main = TIO.interact $ sed [Print]
