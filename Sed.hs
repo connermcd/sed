@@ -4,6 +4,7 @@ import Control.Monad.State
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.List.Zipper as Z
+import qualified Text.Regex as TR
 
 data SedState = SedState {
                   line         :: Int
@@ -16,7 +17,7 @@ data SedState = SedState {
 data Command = Print
              | Delete
              | Next
-             | Substitute String String [Char]
+             | Substitute String String String
 
 sed :: [Command] -> T.Text -> T.Text
 sed cs t = evalState (runCommands cs) defaultState
@@ -37,9 +38,12 @@ runCommand Delete = modify $ \ss -> ss { patternSpace = T.empty }
 runCommand Next = modify $ \ss -> ss { line = line ss + 1,
                                        input = Z.delete $ input ss,
                                        patternSpace = Z.cursor $ input ss }
+runCommand (Substitute p r _) = modify $ \ss ->
+    let regex = TR.subRegex (TR.mkRegex p) (T.unpack $ patternSpace ss) r
+    in ss { patternSpace = T.pack regex }
 
 -- (<+>) :: T.Text -> T.Text -> T.Text
 -- a <+> b = a `T.append` T.cons '\n' b
 
 main :: IO ()
-main = TIO.interact $ sed [Print]
+main = TIO.interact $ sed [Substitute "^t(.*)" "\\1t" "", Print]
