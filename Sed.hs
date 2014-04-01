@@ -1,5 +1,7 @@
 module Sed where
 
+import Parser (parseSed, Command(..))
+
 import Control.Monad.State
 import qualified Data.Text as T
 import qualified Data.List.Zipper as Z
@@ -12,14 +14,10 @@ data SedState = SedState {
                 , holdSpace    :: T.Text
                 }
 
-data Command = Print
-             | Delete
-             | Next
-             | Substitute String String String
-
-sed :: [Command] -> T.Text -> T.Text
-sed cs t = evalState (runCommands cs) defaultState
-    where defaultState = SedState 1 (Z.delete z) (Z.cursor z) (T.singleton '\n')
+sed :: String -> T.Text -> T.Text
+sed s t = evalState (runCommands cs) defaultState
+    where cs = parseSed s
+          defaultState = SedState 1 (Z.delete z) (Z.cursor z) (T.singleton '\n')
           z = Z.fromList $ T.lines t
 
 runCommands :: [Command] -> State SedState T.Text
