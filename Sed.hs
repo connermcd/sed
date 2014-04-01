@@ -2,7 +2,6 @@ module Sed where
 
 import Control.Monad.State
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 import qualified Data.List.Zipper as Z
 import qualified Text.Regex as TR
 
@@ -43,6 +42,3 @@ runCommand (Substitute p r _) = modify $ \ss ->
 
 -- (<+>) :: T.Text -> T.Text -> T.Text
 -- a <+> b = a `T.append` T.cons '\n' b
-
-main :: IO ()
-main = TIO.interact $ sed [Substitute "^t(.*)" "\\1t" "", Print]
