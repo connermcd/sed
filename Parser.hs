@@ -19,7 +19,7 @@ parseSed s = case parse parseCommands [] s of
                 Right cmds -> cmds
 
 parseCommands :: Parser [Command]
-parseCommands = sepEndBy parseCommand (char ';')
+parseCommands = sepEndBy parseCommand (char ';' <|> newline)
 
 parseCommand :: Parser Command
 parseCommand = do
