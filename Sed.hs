@@ -14,19 +14,20 @@ data SedState = SedState {
                 , holdSpace    :: T.Text
                 }
 
-sed :: String -> T.Text -> T.Text
-sed s t = evalState (runCommands cs) defaultState
+sed :: Bool -> String -> T.Text -> T.Text
+sed n s t = evalState (runCommands n cs) defaultState
     where cs = parseSed s
           defaultState = SedState 1 (Z.delete z) (Z.cursor z) (T.singleton '\n')
           z = Z.fromList $ T.lines t
 
-runCommands :: [Command] -> State SedState T.Text
-runCommands cs = do
+runCommands :: Bool -> [Command] -> State SedState T.Text
+runCommands n cs = do
     mapM_ runCommand cs
+    unless n (runCommand Print)
     ss <- get
     if Z.endp $ zipper ss
     then return . T.unlines . Z.toList $ zipper ss
-    else runCommand Next >> runCommands cs
+    else runCommand Next >> runCommands n cs
 
 runCommand :: Command -> State SedState ()
 runCommand Print = modify $ \ss -> ss { zipper = Z.push (patternSpace ss) (zipper ss) }
