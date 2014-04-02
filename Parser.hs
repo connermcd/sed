@@ -1,4 +1,4 @@
-module Parser where
+module Parser (Command(..), parseSed) where
 
 import Data.Char (isAlpha)
 import Text.Parsec

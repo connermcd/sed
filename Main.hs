@@ -1,6 +1,7 @@
 module Main where
 
 import Sed
+
 import System.Environment (getArgs)
 import qualified Data.Text.IO as TIO
 

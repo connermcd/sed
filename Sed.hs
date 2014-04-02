@@ -1,6 +1,6 @@
-module Sed where
+module Sed (sed) where
 
-import Parser (parseSed, Command(..))
+import Parser
 
 import Control.Monad.State
 import qualified Data.Text as T
