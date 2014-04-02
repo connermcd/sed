@@ -11,7 +11,7 @@ data Command = Print
              deriving Show
 
 delims :: String
-delims = "!@#$%^&*-_=+'\";:,./?"
+delims = "!@#$%^&*-_=+'\";:,./?|"
 
 parseSed :: String -> [Command]
 parseSed s = case parse parseCommands [] s of
