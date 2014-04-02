@@ -35,6 +35,7 @@ runCommand Delete = modify $ \ss -> ss { patternSpace = T.empty }
 runCommand Next = modify $ \ss -> ss { line = line ss + 1,
                                        zipper = Z.delete $ zipper ss,
                                        patternSpace = Z.cursor $ zipper ss }
+runCommand Hold = modify $ \ss -> ss { holdSpace = patternSpace ss }
 runCommand (Substitute p r _) = modify $ \ss ->
     let regex = TR.subRegex (TR.mkRegex p) (T.unpack $ patternSpace ss) r
     in ss { patternSpace = T.pack regex }

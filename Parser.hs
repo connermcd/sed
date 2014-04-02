@@ -7,6 +7,7 @@ import Text.Parsec.String
 data Command = Print
              | Delete
              | Next
+             | Hold
              | Substitute String String String
              deriving Show
 
@@ -24,14 +25,15 @@ parseCommands = sepEndBy parseCommand (char ';' <|> newline)
 parseCommand :: Parser Command
 parseCommand = do
     many $ char ' '
-    cmd <- parsePrint <|> parseDelete <|> parseNext <|> parseSubstitute
+    cmd <- parsePrint <|> parseDelete <|> parseNext <|> parseHold <|> parseSubstitute
     many $ char ' '
     return cmd
 
-parsePrint, parseDelete, parseNext, parseSubstitute :: Parser Command
+parsePrint, parseDelete, parseNext, parseHold, parseSubstitute :: Parser Command
 parsePrint = char 'p' >> return Print
 parseDelete = char 'd' >> return Delete
 parseNext = char 'n' >> return Next
+parseHold = char 'h' >> return Hold
 parseSubstitute = do
     char 's'
     delim <- oneOf delims
