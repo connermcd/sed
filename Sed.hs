@@ -12,33 +12,47 @@ data SedState = SedState {
                 , zipper       :: Z.Zipper T.Text
                 , patternSpace :: T.Text
                 , holdSpace    :: T.Text
+                , quiet        :: Bool
+                , skip         :: Bool
                 }
 
 sed :: Bool -> String -> T.Text -> T.Text
-sed n s t = evalState (runCommands n cs) defaultState
-    where cs = parseSed s
-          defaultState = SedState 1 (Z.delete z) (Z.cursor z) (T.singleton '\n')
+sed n s t = evalState (runCommands $ parseSed s) defaultState
+    where defaultState = SedState 1 (Z.delete z) (Z.cursor z) (T.singleton '\n') n False
           z = Z.fromList $ T.lines t
 
-runCommands :: Bool -> [Command] -> State SedState T.Text
-runCommands n cs = do
+runCommands :: [Command] -> State SedState T.Text
+runCommands cs = do
     mapM_ runCommand cs
-    unless n (runCommand Print)
     ss <- get
     if Z.endp $ zipper ss
-    then return . T.unlines . Z.toList $ zipper ss
-    else runCommand Next >> runCommands n cs
+    then do
+        unless (quiet ss) (runCommand Print)
+        ss <- get
+        return . T.unlines . Z.toList $ zipper ss
+    else do
+        execute Next
+        modify $ \s -> s { skip = False }
+        runCommands cs
 
 runCommand :: Command -> State SedState ()
-runCommand Print = modify $ \ss -> ss { zipper = Z.push (patternSpace ss) (zipper ss) }
-runCommand Delete = modify $ \ss -> ss { patternSpace = T.empty }
-runCommand Next = modify $ \ss -> ss { line = line ss + 1,
-                                       zipper = Z.delete $ zipper ss,
-                                       patternSpace = Z.cursor $ zipper ss }
-runCommand Hold = modify $ \ss -> ss { holdSpace = patternSpace ss }
-runCommand (Substitute p r _) = modify $ \ss ->
-    let regex = TR.subRegex (TR.mkRegex p) (T.unpack $ patternSpace ss) r
-    in ss { patternSpace = T.pack regex }
+runCommand c = gets skip >>= \skp -> unless skp (execute c)
+
+execute :: Command -> State SedState ()
+execute Print = modify $ \s -> s { zipper = Z.push (patternSpace s) (zipper s) }
+execute Delete = modify $ \s -> s { skip = True }
+execute Next = do
+    ss <- get
+    unless (quiet ss) (runCommand Print)
+    if Z.endp $ zipper ss
+    then modify $ \s -> s { skip = True }
+    else modify $ \s -> s { line = line ss + 1,
+                            zipper = Z.delete $ zipper s,
+                            patternSpace = Z.cursor $ zipper s }
+execute Hold = modify $ \s -> s { holdSpace = patternSpace s }
+execute (Substitute p r _) = modify $ \s ->
+    let regex = TR.subRegex (TR.mkRegex p) (T.unpack $ patternSpace s) r
+    in s { patternSpace = T.pack regex }
 
 -- (<+>) :: T.Text -> T.Text -> T.Text
 -- a <+> b = a `T.append` T.cons '\n' b
