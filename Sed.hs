@@ -50,9 +50,10 @@ execute Next = do
                             zipper = Z.delete $ zipper s,
                             patternSpace = Z.cursor $ zipper s }
 execute Hold = modify $ \s -> s { holdSpace = patternSpace s }
-execute (Substitute p r _) = modify $ \s ->
-    let regex = TR.subRegex (TR.mkRegex p) (T.unpack $ patternSpace s) r
-    in s { patternSpace = T.pack regex }
+execute (Substitute regexp repl _) = modify $ \s ->
+    let ps   = T.unpack . patternSpace $ s
+        subs = TR.subRegex regexp ps repl
+    in s { patternSpace = T.pack subs }
 
 -- (<+>) :: T.Text -> T.Text -> T.Text
 -- a <+> b = a `T.append` T.cons '\n' b
