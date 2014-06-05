@@ -3,13 +3,14 @@ module Parser (Command(..), parseSed) where
 import Data.Char (isAlpha)
 import Text.Parsec
 import Text.Parsec.String
+import Text.Regex
 
 data Command = Print
              | Delete
              | Next
              | Hold
-             | Substitute String String String
-             deriving Show
+             | Substitute Regex String String
+             --deriving Show
 
 delims :: String
 delims = "!@#$%^&*-_=+'\";:,./?|"
@@ -42,4 +43,4 @@ parseSubstitute = do
     replace <- many $ satisfy (/= delim)
     char delim
     flags <- many $ satisfy isAlpha
-    return (Substitute pattern replace flags)
+    return $ Substitute (mkRegex pattern) replace flags
