@@ -17,11 +17,11 @@ data SedState = SedState {
                 }
 
 sed :: Bool -> String -> T.Text -> T.Text
-sed n s t = evalState (runCommands $ parseSed s) defaultState
+sed n s t = T.concat $ evalState (runCommands $ parseSed s) defaultState
     where defaultState = SedState 1 (Z.delete z) (Z.cursor z) (T.singleton '\n') n False
           z = Z.fromList $ T.lines t
 
-runCommands :: [Command] -> State SedState T.Text
+runCommands :: [Command] -> State SedState [T.Text]
 runCommands cs = do
     mapM_ runCommand cs
     ss <- get
@@ -29,7 +29,7 @@ runCommands cs = do
     then do
         unless (quiet ss) (runCommand Print)
         ss <- get
-        return . T.unlines . Z.toList $ zipper ss
+        return [T.unlines . Z.toList $ zipper ss]
     else do
         execute Next
         modify $ \s -> s { skip = False }
@@ -40,7 +40,7 @@ runCommands cs = do
         let (Z.Zip outputSoFar remainder) = zipper ssWithOutput
         modify $ \s -> s { zipper = Z.Zip [] remainder }
         rest <- runCommands cs
-        return $ T.concat [T.unlines outputSoFar, rest]
+        return $ (T.unlines outputSoFar:rest)
 
 runCommand :: Command -> State SedState ()
 runCommand c = gets skip >>= \skp -> unless skp (execute c)
