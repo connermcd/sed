@@ -24,11 +24,6 @@ sed n s t = evalState (runCommands $ parseSed s) defaultState
 runCommands :: [Command] -> State SedState T.Text
 runCommands cs = do
     mapM_ runCommand cs
-    -- To support laziness, we should grab the output that we
-    -- have so far and make it available as a lazy Text block.
-    ssWithOutput <- get
-    let (Z.Zip outputSoFar remainder) = zipper ssWithOutput
-    modify $ \s -> s { zipper = Z.Zip [] remainder }
     ss <- get
     if Z.endp $ zipper ss
     then do
@@ -36,6 +31,11 @@ runCommands cs = do
         ss <- get
         return . T.unlines . Z.toList $ zipper ss
     else do
+        -- To support laziness, we should grab the output that we
+        -- have so far and make it available as a lazy Text block.
+        ssWithOutput <- get
+        let (Z.Zip outputSoFar remainder) = zipper ssWithOutput
+        modify $ \s -> s { zipper = Z.Zip [] remainder }
         execute Next
         modify $ \s -> s { skip = False }
         rest <- runCommands cs
