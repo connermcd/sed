@@ -27,10 +27,8 @@ runCommands cs = do
     -- To support laziness, we should grab the output that we
     -- have so far and make it available as a lazy Text block.
     ssWithOutput <- get
-    let (Z.Zip ls rs) = zipper ssWithOutput
-        outputSoFar = T.unlines $ Z.toList $ Z.Zip ls []
-        remainder   = Z.Zip [] rs
-    modify $ \s -> s { zipper = remainder }
+    let (Z.Zip outputSoFar remainder) = zipper ssWithOutput
+    modify $ \s -> s { zipper = Z.Zip [] remainder }
     ss <- get
     if Z.endp $ zipper ss
     then do
@@ -41,7 +39,7 @@ runCommands cs = do
         execute Next
         modify $ \s -> s { skip = False }
         rest <- runCommands cs
-        return $ T.concat [outputSoFar, rest]
+        return $ T.concat [T.unlines outputSoFar, rest]
 
 runCommand :: Command -> State SedState ()
 runCommand c = gets skip >>= \skp -> unless skp (execute c)

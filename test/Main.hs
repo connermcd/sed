@@ -31,7 +31,7 @@ sedCase n txt cs = do
 -- any more input then it needs  to  produce the amount of output
 -- that we ask it for. This test uses the sed function  to  simu-
 -- late  running  `yes | sed -n 'p' | head 1` at the command line
--- to verify that it termintaes.
+-- to verify that it terminates.
 lazyCase :: IO Test
 lazyCase = do
     let input  = replicate 10 "y" ++ [error "Non-Laziness Detected"]
