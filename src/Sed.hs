@@ -31,13 +31,14 @@ runCommands cs = do
         ss <- get
         return . T.unlines . Z.toList $ zipper ss
     else do
-        -- To support laziness, we should grab the output that we
-        -- have so far and make it available as a lazy Text block.
+        execute Next
+        modify $ \s -> s { skip = False }
+        -- To support laziness, we should, before we recurse, grab
+        -- the output that we have so far and make it available as
+        -- a lazy Text block.
         ssWithOutput <- get
         let (Z.Zip outputSoFar remainder) = zipper ssWithOutput
         modify $ \s -> s { zipper = Z.Zip [] remainder }
-        execute Next
-        modify $ \s -> s { skip = False }
         rest <- runCommands cs
         return $ T.concat [T.unlines outputSoFar, rest]
 
