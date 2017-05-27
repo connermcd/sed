@@ -3,7 +3,7 @@ module Sed (sed) where
 import Parser
 
 import Control.Monad.State
-import qualified Data.Text as T
+import qualified Data.Text.Lazy as T
 import qualified Data.List.Zipper as Z
 import qualified Text.Regex as TR
 

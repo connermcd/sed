@@ -1,7 +1,7 @@
 module Main (main) where
 
 import Sed
-import qualified Data.Text as T
+import qualified Data.Text.Lazy as T
 
 import Control.Monad
 import Data.List

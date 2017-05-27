@@ -7,7 +7,7 @@ import Data.List (intercalate)
 import System.Console.GetOpt
 import System.Environment (getArgs)
 import System.Exit
-import qualified Data.Text.IO as TIO
+import qualified Data.Text.Lazy.IO as TIO
 
 data Flag = Help
           | Quiet
